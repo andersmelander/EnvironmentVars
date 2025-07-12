@@ -450,38 +450,51 @@ var
   Buffer: string;
   Size: integer;
   n: integer;
+  First: boolean;
+  LastResult: string;
 begin
   Result := Name;
   if (Name = '') then
     exit;
 
-  if (StrScan(PChar(Name), '%') = nil) then
-    exit;
+  First := True;
 
-  SetEnvironmentValues(Groups, False);
-
-  Size := ExpandEnvironmentStrings(PChar(Result), nil, 0);
-  if (Size <> 0) then
+  while (StrScan(PChar(Name), '%') <> nil) do
   begin
-    SetLength(Buffer, Size-1);
-    Size := ExpandEnvironmentStrings(PChar(Result), PChar(Buffer), Size);
-    SetLength(Buffer, Size-1);
-    Result := Buffer;
-  end;
+    LastResult := Result;
 
-  n := PosEx('{', Result);
-  if (n <> 0) then
-  begin
-    Size := PosEx('}', Result, n) - n;
-    if (Size > 0) then
+    if (First) then
     begin
-      p := CSIDLToNumber(Copy(Result, n, Size));
-      if (p > 0) then
+      SetEnvironmentValues(Groups, False);
+      First := False;
+    end;
+
+    Size := ExpandEnvironmentStrings(PChar(Result), nil, 0);
+    if (Size <> 0) then
+    begin
+      SetLength(Buffer, Size-1);
+      Size := ExpandEnvironmentStrings(PChar(Result), PChar(Buffer), Size);
+      SetLength(Buffer, Size-1);
+      Result := Buffer;
+    end;
+
+    n := PosEx('{', Result);
+    if (n <> 0) then
+    begin
+      Size := PosEx('}', Result, n) - n;
+      if (Size > 0) then
       begin
-        Delete(Result, n, Size);
-        Insert(GetCSIDLFolder(p), Result, n);
+        p := CSIDLToNumber(Copy(Result, n, Size));
+        if (p > 0) then
+        begin
+          Delete(Result, n, Size);
+          Insert(GetCSIDLFolder(p), Result, n);
+        end;
       end;
     end;
+
+    if (LastResult = Result) then
+      break;
   end;
 
   Result := StringReplace(Result, '/', '\', [rfReplaceAll]);
