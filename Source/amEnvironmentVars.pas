@@ -290,11 +290,12 @@ begin
         if (EnvName = '') then
           continue;
 
-        EnvValue := EnvironmentValues.Values[EnvName];
+        EnvValue := ExpandString(EnvironmentValues.Values[EnvName]);
         if (EnvValue = '') then
           continue;
 
-        EnvPath := PathUtil.PathMakeCanonical(EnvValue);
+        EnvPath := ExpandString(EnvValue);
+        EnvPath := PathUtil.PathMakeCanonical(EnvPath);
 
 
         // FilenameMakeRelative cannot handle a folder relative to itself, so we handle that here
@@ -323,14 +324,12 @@ begin
         if (Length(s)-1 < BestLength) then
         begin
           BestEnvName := EnvName;
-          BestPath := s;
           // Save relative path, but without the leading '.'.
           // We should actually also remove the leading '\' but we leave it be since the result "looks" better
           // with a "\" separating the environment value from the rest.
           // When the resulting string is expanded we will end up with a double slash, but the since
           // the ExpandEnvironmentVariable() function can handle that no harm is done.
-          Delete(BestPath, 1, 1);
-          // Old: Delete(BestPath, 1, 2); // Save relative path, but without the leading '.\'
+          BestPath := Copy(s, 2, MaxInt);
           BestLength := Length(BestPath);
         end;
       end;
